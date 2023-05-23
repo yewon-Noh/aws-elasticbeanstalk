@@ -3,44 +3,44 @@ name: Deploy main
 on:
   push:
     branches:
-      - main
+      - main  # action 트리거 브랜치 지정
   workflow_dispatch: # 수동 실행 옵션 (생략)
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # action 스크립트가 작동될 OS
 
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
+      - name: Set up JDK 17  # JDK 설치
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3  # APPLICATION 값으로 properties 파일 생성
       - run: touch ./src/main/resources/application-dev.properties
       - run: echo "${{ secrets.APPLICATION }}" > ./src/main/resources/application-dev.properties
       - run: cat ./src/main/resources/application-dev.properties
 
-      - name: Grant execute permission for gradlew
+      - name: Grant execute permission for gradlew  # Gradle 설정(1)
         run: chmod +x ./gradlew
         shell: bash
 
-      - name: Build with Gradle
+      - name: Build with Gradle  # Gradle 설정(2)
         run: ./gradlew clean build --debug
         shell: bash
 
-      - name: Get current time
+      - name: Get current time  # 시간 설정
         uses: 1466587594/get-current-time@v2
         id: current-time
         with:
           format: YYYYMMDDTHHmm
           utcOffset: "+09:00"
 
-      - name: Generate deployment package
+      - name: Generate deployment package  # 배포
         run: |
           mkdir -p deploy
           cp build/libs/*.jar deploy/application.jar
@@ -48,7 +48,7 @@ jobs:
           cp -r .ebextensions deploy/.ebextensions
           cd deploy && zip -r deploy.zip .
 
-      - name: Deploy Consumer to EB
+      - name: Deploy Consumer to EB  # Elastic Beanstalk Consumer 연결
         uses: einaregilsson/beanstalk-deploy@v21
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
